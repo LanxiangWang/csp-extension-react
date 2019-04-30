@@ -75,6 +75,7 @@ class PageControl extends Component {
         let directivesAry = directives.split(';');
         directivesAry.map(directive => {
             if (directive != '') {
+                directive = directive.trim();
                 let cutIndex = directive.indexOf(' ');
                 let name = directive.substring(0, cutIndex);
                 let value = directive.substring(cutIndex + 1);
