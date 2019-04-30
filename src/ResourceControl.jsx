@@ -72,6 +72,8 @@ class ResourceControl extends Component {
         this.handleClose = this.handleClose.bind(this);
         this.onImageConfigChange = this.onImageConfigChange.bind(this);
         this.onIframeConfigChange = this.onIframeConfigChange.bind(this);
+        this.onCssConfigChange = this.onCssConfigChange.bind(this);
+        this.onScriptConfigChange = this.onScriptConfigChange.bind(this);
         this.handleChangeIndex = this.handleChangeIndex.bind(this);
         this.onCheckChange = this.onCheckChange.bind(this);
         this.handleSave = this.handleSave.bind(this);
@@ -85,6 +87,9 @@ class ResourceControl extends Component {
             scriptConfig: 'allow',
             index: 0,
             tempImageWhitelist: [],
+            tempIframeWhiteList: [],
+            tempCssWhiteList: [],
+            tempScriptWhiteList: [],
         }
 
         this.bg = chrome.extension.getBackgroundPage();
@@ -94,11 +99,17 @@ class ResourceControl extends Component {
         this.setState({ 
             open: false,
             tempImageWhitelist: [],
+            tempCssWhiteList: [],
+            tempIframeWhiteList: [],
+            tempScriptWhiteList: [],
         });
     }
 
     handleSave() {
         this.bg.addToWhiteList('image', this.state.tempImageWhitelist);
+        this.bg.addToWhiteList('iframe', this.state.tempIframeWhiteList);
+        this.bg.addToWhiteList('stylesheet', this.state.tempCssWhiteList);
+        this.bg.addToWhiteList('script', this.state.tempScriptWhiteList);
         this.handleClose();
     }
     
@@ -110,20 +121,24 @@ class ResourceControl extends Component {
 
     onImageConfigChange(status) {
         this.setState({ imageConfig: status });
-        this.bg.changeImageConfig(status);
+        this.bg.changeConfig('image', status);
         console.log('panel, image config ', status);
     }
 
     onIframeConfigChange(status) {
         this.setState({ iframeConfig: status });
+        this.bg.changeConfig('iframe', status);
         console.log('panel, iframe config ', status);
     }
 
     onCssConfigChange(status) {
+        console.log('react trys to change config of bg: ', status);
+        this.bg.changeConfig('stylesheet', status);
         this.setState({ cssConfig: status });
     }
 
     onScriptConfigChange(status) {
+        this.bg.changeConfig('script', status);
         this.setState({ scriptConfig: status });
     }
 
@@ -132,9 +147,10 @@ class ResourceControl extends Component {
     }
 
     onCheckChange(type, value, isChecked) {
+        let newWhiteList;
         switch(type) {
             case 'image':
-                let newWhiteList = [...this.state.tempImageWhitelist];
+                newWhiteList = [...this.state.tempImageWhitelist];
                 if (isChecked) {
                     if (!newWhiteList.includes(value)) {
                         newWhiteList.push(value);
@@ -146,14 +162,67 @@ class ResourceControl extends Component {
                     }
                 }
                 this.setState({ tempImageWhitelist: newWhiteList });
+                break;
+            case 'stylesheet':
+                newWhiteList = [...this.state.tempCssWhiteList];
+                if (isChecked) {
+                    if (!newWhiteList.includes(value)) {
+                        newWhiteList.push(value);
+                    }
+                } else {
+                    let index = newWhiteList.indexOf(value);
+                    if (index !== -1) {
+                        newWhiteList.splice(index, 1);
+                    }
+                }
+                this.setState({ tempCssWhiteList: newWhiteList });
+                break;
+            case 'iframe':
+                newWhiteList = [...this.state.tempIframeWhiteList];
+                if (isChecked) {
+                    if (!newWhiteList.includes(value)) {
+                        newWhiteList.push(value);
+                    }
+                } else {
+                    let index = newWhiteList.indexOf(value);
+                    if (index !== -1) {
+                        newWhiteList.splice(index, 1);
+                    }
+                }
+                this.setState({ tempIframeWhiteList: newWhiteList });
+                break;
+            case 'script':
+                newWhiteList = [...this.state.tempScriptWhiteList];
+                if (isChecked) {
+                    if (!newWhiteList.includes(value)) {
+                        newWhiteList.push(value);
+                    }
+                } else {
+                    let index = newWhiteList.indexOf(value);
+                    if (index !== -1) {
+                        newWhiteList.splice(index, 1);
+                    }
+                }
+                this.setState({ tempScriptWhiteList: newWhiteList });
+                break;
         }
     }
 
     onBulkUpdate(type, list) {
+        const newWhiteList = [...list];
         switch(type) {
             case 'image':
-                const newWhiteList = [...list];
                 this.setState({ tempImageWhitelist: newWhiteList });
+                break;
+            case 'stylesheet':
+                this.setState({ tempCssWhiteList: newWhiteList });
+                break;
+            case 'iframe':
+                this.setState({ tempIframeWhiteList: newWhiteList });
+                break;
+            case 'script':
+                this.setState({ tempScriptWhiteList: newWhiteList });
+                break;
         }
     }
 
@@ -225,11 +294,29 @@ class ResourceControl extends Component {
                         type='image'
                         onCheckChange={this.onCheckChange} 
                         onBulkChange={this.onBulkUpdate}
-                        blackList={this.bg.getBlackListImage()}/>
+                        blackList={this.bg.getBlackList('image')}/>
                 </TabContainer>
-                <TabContainer dir={theme.direction}>Iframes</TabContainer>
-                <TabContainer dir={theme.direction}>Style Sheets</TabContainer>
-                <TabContainer dir={theme.direction}>Scripts</TabContainer>
+                <TabContainer dir={theme.direction}>
+                    <NotificationList 
+                        type='iframe'
+                        onCheckChange={this.onCheckChange} 
+                        onBulkChange={this.onBulkUpdate}
+                        blackList={this.bg.getBlackList('iframe')}/>
+                </TabContainer>
+                <TabContainer dir={theme.direction}>
+                    <NotificationList 
+                        type='stylesheet'
+                        onCheckChange={this.onCheckChange} 
+                        onBulkChange={this.onBulkUpdate}
+                        blackList={this.bg.getBlackList('stylesheet')}/>
+                </TabContainer>
+                <TabContainer dir={theme.direction}>
+                    <NotificationList 
+                        type='script'
+                        onCheckChange={this.onCheckChange} 
+                        onBulkChange={this.onBulkUpdate}
+                        blackList={this.bg.getBlackList('script')}/>
+                </TabContainer>
                 </SwipeableViews>
             </div>
 

@@ -50,10 +50,12 @@ class SimpleExpansionPanel extends React.Component {
     }
 
     componentDidMount() {
-        const { imageConfig, iframeConfig } = this.bg.getConfigs();
+        const { imageConfig, iframeConfig, cssConfig, scriptConfig } = this.bg.getConfigs();
         this.setState({
             imageConfig,
             iframeConfig,
+            cssConfig,
+            scriptConfig
         });
     }
 
@@ -78,7 +80,7 @@ class SimpleExpansionPanel extends React.Component {
         this.setState({
             cssConfig: config,
         });
-        // this.props.onCssChange(config);
+        this.props.onCssChange(config);
     }
 
     onScriptConfigChange(event) {
@@ -86,7 +88,7 @@ class SimpleExpansionPanel extends React.Component {
         this.setState({
             scriptConfig: config,
         });
-        // this.props.onScriptChange(config);
+        this.props.onScriptChange(config);
     }
 
     render() {

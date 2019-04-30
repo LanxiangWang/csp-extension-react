@@ -3,9 +3,17 @@ let originalCspMap = new Map();
 let isCheckedMap = new Map();
 let imageConfig = 'allow';
 let iframeConfig = 'allow';
+let cssConfig = 'allow';
+let scriptConfig = 'allow';
 let controlCategory = 'page';
 let blackListImage = [];
 let whiteListImage = [];
+let blackListCss = [];
+let whiteListCss = [];
+let blackListScript = [];
+let whiteListScript = [];
+let blackListIframe = [];
+let whiteListIframe = [];
 
 chrome.webRequest.onHeadersReceived.addListener(details => {
     if (controlCategory !== 'page') {
@@ -54,14 +62,13 @@ chrome.webRequest.onHeadersReceived.addListener(details => {
     }
 }, {urls: ["<all_urls>"]}, ["responseHeaders", "extraHeaders", "blocking"]);
 
-
+// this is for resources
 chrome.webRequest.onBeforeSendHeaders.addListener(details => {
     if (controlCategory !== 'resources') {
         return;
     }
-    console.log('resources!!!');
+    // console.log(details);
     if (details.type === 'image') {
-        console.log(details);
         switch(imageConfig) {
             case 'allow':
                 break;
@@ -82,6 +89,70 @@ chrome.webRequest.onBeforeSendHeaders.addListener(details => {
                 
         }
     }
+
+    if (details.type === 'stylesheet') {
+        switch(cssConfig) {
+            case 'allow':
+                break;
+            case 'disable':
+                console.log('CSS is disabled');
+                return { cancel: true };
+            case 'ask':
+                const url = details.url;
+                if (whiteListCss.includes(url)) {
+                    break;
+                } else {
+                    if (!blackListCss.includes(url)) {
+                        blackListCss.push(url);
+                    }
+
+                    return { cancel: true };
+                }
+        }
+    }
+
+    if (details.type === 'script') {
+        switch(scriptConfig) {
+            case 'allow':
+                break;
+            case 'disable':
+                console.log('Script is disabled');
+                return { cancel: true };
+            case 'ask':
+                const url = details.url;
+                if (whiteListScript.includes(url)) {
+                    break;
+                } else {
+                    if (!blackListScript.includes(url)) {
+                        blackListScript.push(url);
+                    }
+
+                    return { cancel: true };
+                }
+        }
+    }
+
+    if (details.type === 'iframe') {
+        switch(cssConfig) {
+            case 'allow':
+                break;
+            case 'disable':
+                console.log('CSS is disabled');
+                return { cancel: true };
+            case 'ask':
+                const url = details.url;
+                if (whiteListIframe.includes(url)) {
+                    break;
+                } else {
+                    if (!blackListIframe.includes(url)) {
+                        blackListIframe.push(url);
+                    }
+
+                    return { cancel: true };
+                }
+        }
+    }
+
 }, {urls: ["<all_urls>"]}, ["requestHeaders", "extraHeaders", "blocking"]);
 
 
@@ -114,14 +185,33 @@ function findCSPObject(headers) {
     return index;
 }
 
-function changeImageConfig(status) {
-    imageConfig = status;
+function changeConfig(type, status) {
+    switch(type) {
+        case 'image':
+            imageConfig = status;
+            break;
+        case 'iframe':
+            iframeConfig = status;
+            break;
+        case 'stylesheet':
+            cssConfig = status;
+            console.log('styleSheet config has been changed to: ', status);
+            break;
+        case 'script':
+            scriptConfig = status;
+            break;
+        default:
+            break;
+    }
+    
 }
 
 function getConfigs() {
     return {
         imageConfig,
         iframeConfig,
+        cssConfig,
+        scriptConfig
     }
 }
 
@@ -133,8 +223,17 @@ function changeControlCategory(category) {
     controlCategory = category;
 }
 
-function getBlackListImage() {
-    return blackListImage;
+function getBlackList(type) {
+    switch(type) {
+        case 'image':
+            return blackListImage;
+        case 'iframe':
+            return blackListIframe;
+        case 'stylesheet':
+            return blackListCss;
+        case 'script':
+            return blackListScript;
+    }
 }
 
 function addToWhiteList(type, list) {
@@ -146,6 +245,34 @@ function addToWhiteList(type, list) {
                     let index = blackListImage.indexOf(value);
                     blackListImage.splice(index, 1);
                 }
-            })
+            });
+            break;
+        case 'iframe':
+            list.map(value => {
+                if (!whiteListIframe.includes(value)) {
+                    whiteListIframe.push(value);
+                    let index = blackListIframe.indexOf(value);
+                    blackListIframe.splice(index, 1);
+                }
+            });
+            break;
+        case 'stylesheet':
+            list.map(value => {
+                if (!whiteListCss.includes(value)) {
+                    whiteListCss.push(value);
+                    let index = blackListCss.indexOf(value);
+                    blackListCss.splice(index, 1);
+                }
+            });
+            break;
+        case 'script':
+            list.map(value => {
+                if (!whiteListScript.includes(value)) {
+                    whiteListScript.push(value);
+                    let index = blackListScript.indexOf(value);
+                    blackListScript.splice(index, 1);
+                }
+            });
+            break;
     }
 }

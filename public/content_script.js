@@ -43,19 +43,19 @@ chrome.runtime.onMessage.addListener(function(req, sender, sendResponse) {
 
 
 
-window.onload = function() {
-    if (isPageControl) {
-        let cspMeta = $('meta[http-equiv="Content-Security-Policy"')[0];
-        if (cspMeta) {
-            hasCSPMeta = true;
-            cspDirectives = cspMeta.content;
-        }
+// window.onload = function() {
+//     if (isPageControl) {
+//         let cspMeta = $('meta[http-equiv="Content-Security-Policy"')[0];
+//         if (cspMeta) {
+//             hasCSPMeta = true;
+//             cspDirectives = cspMeta.content;
+//         }
 
-        if (shouldStop === 'true') {
-            injectLoadingPage();
-        }
-    }
-};
+//         if (shouldStop === 'true') {
+//             injectLoadingPage();
+//         }
+//     }
+// };
 
 function injectLoadingPage() {
     console.log('prepare to inject');
