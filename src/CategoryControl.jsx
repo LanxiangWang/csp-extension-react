@@ -52,7 +52,7 @@ class CategoryControl extends Component {
     }
 
     addShopWeb(){
-                var event = this.state.webInput;
+                var event = document.getElementById("shopWeb").value;
                 this.setState({
                     shopWebsite: [event, ...this.state.shopWebsite]
                 });
@@ -68,7 +68,7 @@ class CategoryControl extends Component {
     }
 
     deleteShopWeb(){
-                 var event = this.state.webInput;
+                 var event = document.getElementById("shopWeb").value;
                  this.setState(() => ({
                     shopWebsite: this.state.shopWebsite.filter(el => el != event )
                  }));
@@ -104,7 +104,8 @@ class CategoryControl extends Component {
 
     handleShopCSP(){
              console.log("Start to handle csp!");
-              var csp = this.state.cspInput;
+             //shopCSP
+              var csp = document.getElementById("shopCSP").value;
               console.log("csp: ",csp);
               let that = this;
 
@@ -223,7 +224,7 @@ class CategoryControl extends Component {
                                     </ul>
                                     </div>
                                     <br />
-                                    <label> Web:<input type="text" id="web" value={this.state.webInput} onChange={e => this.setState({webInput: e.target.value})}/></label>
+                                    <label> Web:<input type="text" id="shopWeb" /></label>
                                     <br />
                                     <br />
                                     <Fab size= "small" onClick={this.addShopWeb} color="secondary" aria-label="Add" ><AddIcon />
@@ -243,7 +244,7 @@ class CategoryControl extends Component {
                                 </ExpansionPanelSummary>
                                 <ExpansionPanelDetails>
                                   <Typography>
-                                    <label> Input CSP:<input type="text" id="cspInput" value={this.state.cspInput} onChange={e => this.setState({cspInput: e.target.value})}/></label>
+                                    <label> Input CSP:<input type="text" id="shopCSP"/></label>
                                       <Button variant="contained" onClick={this.handleShopCSP}>
                                               Confirm
                                       </Button>
