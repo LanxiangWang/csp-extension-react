@@ -1,3 +1,8 @@
 .loading_body {
-    background-color: green;
+    background-color: grey;
+}
+
+.my_image {
+    width: 50%;
+    margin-left: 25%;
 }

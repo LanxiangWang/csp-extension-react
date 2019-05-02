@@ -15,6 +15,7 @@ let whiteListScript = [];
 let blackListIframe = [];
 let whiteListIframe = [];
 
+// this is for page control
 chrome.webRequest.onHeadersReceived.addListener(details => {
     if (controlCategory !== 'page') {
         return;
@@ -24,7 +25,6 @@ chrome.webRequest.onHeadersReceived.addListener(details => {
         let headers = details.responseHeaders;
         let url = details.url;
 
-        
         if (!isCheckedMap.get(url)) {
             headers.map(header => {
                 if (header.name === 'content-security-policy') {

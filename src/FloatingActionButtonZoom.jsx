@@ -110,14 +110,25 @@ class FloatingActionButtonZoom extends React.Component {
     switch(category) {
       case 'page':
         newValue = 0;
+        this.setPageControl(true);
         break;
       case 'resources':
         newValue = 1;
+        this.setPageControl(false);
         break;
       case 'categories':
+        this.setPageControl(false);
         newValue = 2;
     }
     this.setState({ value: newValue });
+  }
+
+  setPageControl(isPageControl) {
+    chrome.storage.local.set({
+      'isPageControl': isPageControl
+    }, function() {
+      console.log('has been set');
+    })
   }
 
   handleChange = (event, value) => {
@@ -128,6 +139,13 @@ class FloatingActionButtonZoom extends React.Component {
       this.sendMessageToContentScript({ action: 'disablePageControl' }, function() {
         console.log('turn off page control');
       });
+
+      chrome.storage.local.set({
+        'isPageControl': false
+      }, function() {
+        console.log('isPnageControl is clear');
+      });
+
       if (value === 1) {
         this.bg.changeControlCategory('resources');
       } else {
@@ -137,6 +155,13 @@ class FloatingActionButtonZoom extends React.Component {
       this.sendMessageToContentScript({ action: 'enablePageControl' }, function() {
         console.log('turn on page control');
       });
+      
+      chrome.storage.local.set({
+        'isPageControl': true
+      }, function() {
+        console.log('isPnageControl is set');
+      });
+
       this.bg.changeControlCategory('page');
     }
   };

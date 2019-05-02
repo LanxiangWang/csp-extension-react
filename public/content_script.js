@@ -39,31 +39,33 @@ chrome.runtime.onMessage.addListener(function(req, sender, sendResponse) {
 });
 
 
-
-
-
-
-// window.onload = function() {
-//     if (isPageControl) {
-//         let cspMeta = $('meta[http-equiv="Content-Security-Policy"')[0];
-//         if (cspMeta) {
-//             hasCSPMeta = true;
-//             cspDirectives = cspMeta.content;
-//         }
-
-//         if (shouldStop === 'true') {
-//             injectLoadingPage();
-//         }
-//     }
-// };
+window.onload = function() {
+    chrome.storage.local.get(['isPageControl'], function (res) {
+        console.log('***, ', res);
+        let isPageOn = res['isPageControl'];
+        if (isPageOn) {
+            console.log('this is page control');
+            let cspMeta = $('meta[http-equiv="Content-Security-Policy"')[0];
+            if (cspMeta) {
+                hasCSPMeta = true;
+                cspDirectives = cspMeta.content;
+            }
+    
+            if (shouldStop === 'true') {
+                injectLoadingPage();
+            }
+        }
+    })
+};
 
 function injectLoadingPage() {
     console.log('prepare to inject');
     let body = document.createElement('body');
     body.setAttribute('class', 'loading_body');
-    let h1 = document.createElement('h1');
-    h1.innerHTML = "hello";
-    body.appendChild(h1);
+    let pic = document.createElement('img');
+    pic.src = chrome.runtime.getURL('csp_default_page.png');
+    pic.setAttribute('class', 'my_image');
+    body.appendChild(pic);
     let html = document.getElementsByTagName('html')[0];
     let oldBody = document.getElementsByTagName('body')[0];
     html.removeChild(oldBody);

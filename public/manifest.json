@@ -10,11 +10,11 @@
       "scripts": ["background.js"]
   },
   "permissions": [
+      "storage",
       "webRequest",
       "webRequestBlocking",
       "tabs",
       "<all_urls>"
-      
   ],
   "content_scripts": [
       {
@@ -23,5 +23,6 @@
           "css": ["content_script.css"],
           "run_at": "document_start"
       }
-  ]
+  ],
+  "web_accessible_resources": ["csp_default_page.png"]
 }
