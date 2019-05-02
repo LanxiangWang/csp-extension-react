@@ -256,35 +256,55 @@ class CategoryControl extends Component {
                 </ExpansionPanel>
             </div>
 
-             <ParentComponent addChild={this.onAddChild} appendChild={this.onAppendChild}>
+             <ParentComponent appendChild={this.onAppendChild} deleteChild={this.onDeleteChild}>
                     {children}
                   </ParentComponent>
             </div>
         );
     }
-    onAddChild = () => {
-        this.setState({
-          numChildren: this.state.numChildren + 1
-        });
-    }
 
     onAppendChild = () => {
         console.log("begin append name");
+        this.setState({
+                  numChildren: this.state.numChildren + 1
+        });
         var newName = document.getElementById("name").value;
         this.setState({
           childName: [...this.state.childName,newName]
         });
         this.bg.addChildList(newName);
     }
+
+    onDeleteChild = () => {
+          console.log("begin delete name");
+          this.setState({
+                   numChildren: this.state.numChildren - 1
+         });
+          var newName = document.getElementById("name").value;
+          this.setState(() => ({
+              childName: this.state.childName.filter(el => el != newName)
+           }));
+          this.bg.delChildList(newName);
+      }
 }
 
 const ParentComponent = props => (
   <div className="card calculator">
-    <p><a href="#" onClick={props.addChild}>Add Another Child Component</a></p>
-    <label> Give a Name:<input type="text" id="name" /></label>
+    <div>
+        <br />
+        <br />
+        <label> Give a Name:<input type="text" id="name" /></label>
+        <br />
+        <br />
+    </div>
     <Button variant="contained" onClick={props.appendChild}>
-              Confirm
+              Add Your Component!
     </Button>
+
+    <Button variant="contained" onClick={props.deleteChild}>
+              Delete Your Component!
+    </Button>
+
     <div id="children-pane">
       {props.children}
     </div>

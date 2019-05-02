@@ -254,6 +254,10 @@ function delShopWebList(website){
     shopWebList = shopWebList.filter(el => el != website);
 }
 
+function delChildList(child){
+    childList = childList.filter(el => el != child);
+}
+
 
 
 function getCatCSP(url) {
