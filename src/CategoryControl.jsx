@@ -12,71 +12,73 @@ import AddIcon from '@material-ui/icons/Add';
 import DelIcon from '@material-ui/icons/Delete';
 import Button from '@material-ui/core/Button';
 
-const styles = theme => ({
-  margin: {
-    margin: theme.spacing.unit,
-  },
-  extendedIcon: {
-    marginRight: theme.spacing.unit,
-  },
-  fab: {
-      position: 'absolute',
-      bottom:0,
-      right:0,
-  },
-  me: {
-      width: '80%',
-      overflow: 'auto',
-      fontSize: '14px'
-  },
-
-});
 
 const meStyle = {
    color: 'blue',
    width:'80%',
-}
+};
 
 
 class CategoryControl extends Component {
     constructor(props) {
         super(props);
 
-        this.processCSPHelper = this.processCSPHelper.bind(this);
-        this.getCSPFromHeaders = this.getCSPFromHeaders.bind(this);
-        this.addWeb = this.addWeb.bind(this);
-        this.deleteWeb = this.deleteWeb.bind(this);
+        this.addNewsWeb = this.addNewsWeb.bind(this);
+        this.addShopWeb = this.addShopWeb.bind(this);
+        this.deleteNewsWeb = this.deleteNewsWeb.bind(this);
+        this.deleteShopWeb = this.deleteShopWeb.bind(this);
         this.handleCSP = this.handleCSP.bind(this);
+        this.handleShopCSP=this.handleShopCSP.bind(this);
 
         this.state = {
-            originalDirectiveMap: new Map(),
-            modifiedDirectiveMap: new Map(),
-            url: '',
-            website:[],
+            newsWebsite:[],
+            shopWebsite:[],
+            webInput:'',
+            cspInput:'',
+            numChildren:0,
+            childName:[],
         }
 
         this.bg = chrome.extension.getBackgroundPage();
         console.log('bg is: ', this.bg);
     }
 
-    addWeb(){
-            var event = document.getElementById("web").value
+    addNewsWeb(){
+            var event = this.state.webInput;
             this.setState({
-                website: [event, ...this.state.website]
+                newsWebsite: [event, ...this.state.newsWebsite]
             });
             this.bg.addNewsWebList(event);
     }
 
-    deleteWeb(){
-             var event = document.getElementById("web").value
+    addShopWeb(){
+                var event = this.state.webInput;
+                this.setState({
+                    shopWebsite: [event, ...this.state.shopWebsite]
+                });
+                this.bg.addShopWebList(event);
+    }
+
+    deleteNewsWeb(){
+             var event = this.state.webInput;
              this.setState(() => ({
-                    website: this.state.website.filter(el => el != event )
+                newsWebsite: this.state.newsWebsite.filter(el => el != event )
              }));
              this.bg.delNewsWebList(event);
     }
 
+    deleteShopWeb(){
+                 var event = this.state.webInput;
+                 this.setState(() => ({
+                    shopWebsite: this.state.shopWebsite.filter(el => el != event )
+                 }));
+                 this.bg.delShopWebList(event);
+    }
+
     handleCSP(){
-             var csp = document.getElementById("cspInput").value
+             console.log("Start to handle csp!");
+             var csp = this.state.cspInput;
+             console.log("csp: ",csp);
              let that = this;
 
              chrome.tabs.query({
@@ -100,147 +102,247 @@ class CategoryControl extends Component {
 
     }
 
+    handleShopCSP(){
+             console.log("Start to handle csp!");
+              var csp = this.state.cspInput;
+              console.log("csp: ",csp);
+              let that = this;
+
+              chrome.tabs.query({
+                      active: true,
+                      currentWindow: true
+                  }, function(tabs) {
+                      let url = tabs[0].url;
+                      let webList = that.bg.getShopWebList()
+                      console.log('webList: ', webList);
+                      if (webList){
+                          for (let i = 0; i < webList.length; i++) {
+                              var el = webList[i];
+                              if (url.startsWith(el)){
+                                   that.bg.setShopCSP(el,csp);
+                                   console.log("modified: ",csp);
+                                   console.log("found!");
+                              }
+                          }
+                      }
+                  });
+    }
+
+
 
 
 
 
     componentDidMount() {
-        Promise.all([this.getCSPFromHeaders()]).then(values => {
-            let directives = values[0];
-            console.log('directives: ', directives);
-            this.processCSP(directives);
-            // displayCSP();
-        });
-    }
-
-    getCSPFromDOM() {
-        let toReturnPromise = new Promise((resolve, reject) => {
-            this.sendMessageToContentScript({action: 'getCSPMeta'}, function(result) {
-                if (result.containsCSP) {
-                    resolve(result.directives);
-                } else {
-                    resolve('');
-                }
-            });
-        });
-        return toReturnPromise;
-    }
-
-    getCSPFromHeaders() {
-        let that = this;
-        let toReturnPromise = new Promise((resolve, reject) => {
-            chrome.tabs.query({
-                active: true,
-                currentWindow: true
-            }, function(tabs) {
-                let url = tabs[0].url;
-                let headers = that.bg.getCSPHeader(url);
-                that.setState({
-                    url: url
-                })
-                resolve(headers);
-            });
-        });
-        return toReturnPromise;
-    }
-
-    processCSP(directives) {
-        this.processCSPHelper(directives.original, true);
-        this.processCSPHelper(directives.modified, false);
-    }
-
-    processCSPHelper(directives, isOriginalMap) {
-        let map = null;
-        if (isOriginalMap) {
-            map = new Map(this.state.originalDirectiveMap);
-        } else {
-            map = new Map(this.state.modifiedDirectiveMap);
-        }
-        let directivesAry = directives.split(';');
-        directivesAry.map(directive => {
-            if (directive != '') {
-                let cutIndex = directive.indexOf(' ');
-                let name = directive.substring(0, cutIndex);
-                let value = directive.substring(cutIndex + 1);
-                let directiveArray = value.split(' ');
-                map.set(name, directiveArray);
-            }
-        });
-
-        this.setState(prevState => {
-            if (isOriginalMap) {
-                return {
-                    originalDirectiveMap: map
-                }
-            } else {
-                return {
-                    modifiedDirectiveMap: map
-                }
-            }
-        });
     }
 
     render() {
+        const children = [];
+
+        var tmp = this.bg.getChildList();
+        for (var i = 0; i < this.state.numChildren; i += 1) {
+          console.log(tmp[i]);
+          children.push(<ChildComponent key={i} name={tmp[i]} />);
+        };
+
 
         return(
+            <div>
             <div className="news">
             <ExpansionPanel>
+                <ExpansionPanelSummary expandIcon={<ExpandMoreIcon />}>
+                  <Typography className="news">News</Typography>
+                </ExpansionPanelSummary>
+                <ExpansionPanelDetails>
+                  <Typography>
+                    <div>
+
+                        <ExpansionPanel style={meStyle}>
+                            <ExpansionPanelSummary expandIcon={<ExpandMoreIcon />}>
+                              <Typography>Websites List</Typography>
+                            </ExpansionPanelSummary>
+                            <ExpansionPanelDetails>
+                              <Typography>
+                                <div>
+                                <ul>
+                                     {this.state.newsWebsite.map((el) => <li>{el}</li> )}
+                                </ul>
+                                </div>
+                                <br />
+                                <label> Web:<input type="text" id="web" value={this.state.webInput} onChange={e => this.setState({webInput: e.target.value})}/></label>
+                                <br />
+                                <br />
+                                <Fab size= "small" onClick={this.addNewsWeb} color="secondary" aria-label="Add" ><AddIcon />
+                                </Fab>
+                                <Fab size= "small" onClick={this.deleteNewsWeb} color="secondary" aria-label="Delete"><DelIcon />
+                                </Fab>
+
+                              </Typography>
+                            </ExpansionPanelDetails>
+                          </ExpansionPanel>
+                    </div>
+                    <div>
+                        <ExpansionPanel  style={meStyle}>
+                            <ExpansionPanelSummary expandIcon={<ExpandMoreIcon />}>
+                              <Typography>CSP configuration</Typography>
+
+                            </ExpansionPanelSummary>
+                            <ExpansionPanelDetails>
+                              <Typography>
+                                <label> Input CSP:<input type="text" id="cspInput" value={this.state.cspInput} onChange={e => this.setState({cspInput: e.target.value})}/></label>
+                                  <Button variant="contained" onClick={this.handleCSP}>
+                                          Confirm
+                                  </Button>
+                              </Typography>
+                            </ExpansionPanelDetails>
+                          </ExpansionPanel>
+                    </div>
+                  </Typography>
+                </ExpansionPanelDetails>
+            </ExpansionPanel>
+            </div>
+
+            <div className="shopping">
+                <ExpansionPanel>
+                    <ExpansionPanelSummary expandIcon={<ExpandMoreIcon />}>
+                      <Typography className="shopping">Shopping</Typography>
+                    </ExpansionPanelSummary>
+                    <ExpansionPanelDetails>
+                      <Typography>
+                        <div>
+
+                            <ExpansionPanel style={meStyle}>
                                 <ExpansionPanelSummary expandIcon={<ExpandMoreIcon />}>
-                                  <Typography className="news">News</Typography>
+                                  <Typography>Websites List</Typography>
                                 </ExpansionPanelSummary>
                                 <ExpansionPanelDetails>
                                   <Typography>
                                     <div>
-
-                                        <ExpansionPanel style={meStyle}>
-                                                <ExpansionPanelSummary expandIcon={<ExpandMoreIcon />}>
-                                                  <Typography>Websites List</Typography>
-                                                </ExpansionPanelSummary>
-                                                <ExpansionPanelDetails>
-                                                  <Typography>
-                                                    <div>
-                                                    <ul>
-                                                         {this.state.website.map((el) => <li>{el}</li> )}
-                                                    </ul>
-                                                    </div>
-                                                    <Fab onClick={this.addWeb} color="secondary" aria-label="Add" ><AddIcon />
-                                                    </Fab>
-
-                                                    <Fab onClick={this.deleteWeb} color="secondary" aria-label="Delete"><DelIcon />
-                                                    </Fab>
-                                                    <label> Web:<input type="text" id="web"/></label>
-                                                  </Typography>
-                                                </ExpansionPanelDetails>
-                                              </ExpansionPanel>
+                                    <ul>
+                                         {this.state.shopWebsite.map((el) => <li>{el}</li> )}
+                                    </ul>
                                     </div>
-                                    <div>
+                                    <br />
+                                    <label> Web:<input type="text" id="web" value={this.state.webInput} onChange={e => this.setState({webInput: e.target.value})}/></label>
+                                    <br />
+                                    <br />
+                                    <Fab size= "small" onClick={this.addShopWeb} color="secondary" aria-label="Add" ><AddIcon />
+                                    </Fab>
+                                    <Fab size= "small" onClick={this.deleteShopWeb} color="secondary" aria-label="Delete"><DelIcon />
+                                    </Fab>
 
-
-                                    <ExpansionPanel  style={meStyle}>
-                                                <ExpansionPanelSummary expandIcon={<ExpandMoreIcon />}>
-                                                  <Typography>CSP configuration</Typography>
-
-                                                </ExpansionPanelSummary>
-                                                <ExpansionPanelDetails>
-                                                  <Typography>
-                                                    <div style={meStyle}>
-                                                        <label> Input CSP:<input type="text" id="cspInput"/></label>
-                                                          <Button variant="contained" onClick={this.handleCSP}>
-                                                                  Confirm
-                                                          </Button>
-                                                    </div>
-                                                  </Typography>
-                                                </ExpansionPanelDetails>
-                                              </ExpansionPanel>
-                                    </div>
                                   </Typography>
                                 </ExpansionPanelDetails>
-            </ExpansionPanel>
+                              </ExpansionPanel>
+                        </div>
+                        <div>
+                            <ExpansionPanel  style={meStyle}>
+                                <ExpansionPanelSummary expandIcon={<ExpandMoreIcon />}>
+                                  <Typography>CSP configuration</Typography>
 
+                                </ExpansionPanelSummary>
+                                <ExpansionPanelDetails>
+                                  <Typography>
+                                    <label> Input CSP:<input type="text" id="cspInput" value={this.state.cspInput} onChange={e => this.setState({cspInput: e.target.value})}/></label>
+                                      <Button variant="contained" onClick={this.handleShopCSP}>
+                                              Confirm
+                                      </Button>
+                                  </Typography>
+                                </ExpansionPanelDetails>
+                              </ExpansionPanel>
+                        </div>
+                      </Typography>
+                    </ExpansionPanelDetails>
+                </ExpansionPanel>
             </div>
 
-        )
+             <ParentComponent addChild={this.onAddChild} appendChild={this.onAppendChild}>
+                    {children}
+                  </ParentComponent>
+            </div>
+        );
+    }
+    onAddChild = () => {
+        this.setState({
+          numChildren: this.state.numChildren + 1
+        });
+    }
+
+    onAppendChild = () => {
+        console.log("begin append name");
+        var newName = document.getElementById("name").value;
+        this.setState({
+          childName: [...this.state.childName,newName]
+        });
+        this.bg.addChildList(newName);
     }
 }
+
+const ParentComponent = props => (
+  <div className="card calculator">
+    <p><a href="#" onClick={props.addChild}>Add Another Child Component</a></p>
+    <label> Give a Name:<input type="text" id="name" /></label>
+    <Button variant="contained" onClick={props.appendChild}>
+              Confirm
+    </Button>
+    <div id="children-pane">
+      {props.children}
+    </div>
+  </div>
+);
+
+
+
+const ChildComponent = props => <div>{<ExpansionPanel>
+                                     <ExpansionPanelSummary expandIcon={<ExpandMoreIcon />}>
+                                       <Typography >{props.name}</Typography>
+                                     </ExpansionPanelSummary>
+                                     <ExpansionPanelDetails>
+                                       <Typography>
+                                         <div>
+
+                                             <ExpansionPanel style={meStyle}>
+                                                 <ExpansionPanelSummary expandIcon={<ExpandMoreIcon />}>
+                                                   <Typography>Websites List</Typography>
+                                                 </ExpansionPanelSummary>
+                                                 <ExpansionPanelDetails>
+                                                   <Typography>
+                                                     <div>
+                                                     <ul>
+                                                          {}
+                                                     </ul>
+                                                     </div>
+                                                     <br />
+                                                     <label> Web:<input type="text" id="web" /></label>
+                                                     <br />
+                                                     <br />
+                                                     <Fab size= "small" color="secondary" aria-label="Add" ><AddIcon />
+                                                     </Fab>
+                                                     <Fab size= "small" color="secondary" aria-label="Delete"><DelIcon />
+                                                     </Fab>
+
+                                                   </Typography>
+                                                 </ExpansionPanelDetails>
+                                               </ExpansionPanel>
+                                         </div>
+                                         <div>
+                                             <ExpansionPanel  style={meStyle}>
+                                                 <ExpansionPanelSummary expandIcon={<ExpandMoreIcon />}>
+                                                   <Typography>CSP configuration</Typography>
+
+                                                 </ExpansionPanelSummary>
+                                                 <ExpansionPanelDetails>
+                                                   <Typography>
+                                                     <label> Input CSP:<input type="text" id="cspInput"/></label>
+                                                       <Button variant="contained" >
+                                                               Confirm
+                                                       </Button>
+                                                   </Typography>
+                                                 </ExpansionPanelDetails>
+                                               </ExpansionPanel>
+                                         </div>
+                                       </Typography>
+                                     </ExpansionPanelDetails>
+                                 </ExpansionPanel>}</div>;
 
 export default CategoryControl;
