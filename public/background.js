@@ -14,6 +14,11 @@ let blackListScript = [];
 let whiteListScript = [];
 let blackListIframe = [];
 let whiteListIframe = [];
+let newsWebList = [];
+let shopWebList = [];
+let childList = [];
+let catMap = new Map();
+let shopMap = new Map();
 
 // this is for page control
 chrome.webRequest.onHeadersReceived.addListener(details => {
@@ -155,6 +160,48 @@ chrome.webRequest.onBeforeSendHeaders.addListener(details => {
 
 }, {urls: ["<all_urls>"]}, ["requestHeaders", "extraHeaders", "blocking"]);
 
+chrome.webRequest.onHeadersReceived.addListener(details => {
+    if (controlCategory !== 'categories') {
+        return;
+    }
+    console.log('categories!!!');
+    if (details.type === 'main_frame') {
+
+        
+
+        let headers = details.responseHeaders;
+        console.log('******headers: ', headers);
+        let url = details.url;
+
+        
+        
+        let index = findCSPObject(details.responseHeaders);
+
+        console.log('*****index: ', index);
+
+        console.log('policy', getCatCSP(url))
+
+        // if (!getCatCSP(url)){
+        //     return;
+        // } 
+
+        if (index === -1) {
+            details.responseHeaders.push({
+                name: 'content-security-policy',
+                value: getCatCSP(url)? getCatCSP(url):getShopCSP(url)
+            });
+        } else {
+            details.responseHeaders[index] = {
+                name: 'content-security-policy',
+                value: getCatCSP(url)? getCatCSP(url):getShopCSP(url)
+            }
+        }
+        console.log("headers:, ",{ responseHeaders: details.responseHeaders });
+        return { responseHeaders: details.responseHeaders };
+        
+    }
+}, {urls: ["<all_urls>"]}, ["responseHeaders", "extraHeaders", "blocking"]);
+
 
 
 
@@ -173,6 +220,82 @@ function checkUrl(url) {
 function modifyCSP(url, modifiedCSP) {
     map.set(url, modifiedCSP);
     console.log('modified: ', map);
+}
+
+function getNewsWebList(){
+    return newsWebList;
+}
+
+function getShopWebList(){
+    return shopWebList;
+}
+
+function getChildList(){
+    return childList;
+}
+
+function addNewsWebList(website){
+    newsWebList.push(website);
+}
+
+function addChildList(child){
+    childList.push(child);
+}
+
+function addShopWebList(website){
+    shopWebList.push(website);
+}
+
+function delNewsWebList(website){
+    newsWebList = newsWebList.filter(el => el != website);
+}
+
+function delShopWebList(website){
+    shopWebList = shopWebList.filter(el => el != website);
+}
+
+function delChildList(child){
+    childList = childList.filter(el => el != child);
+}
+
+
+
+function getCatCSP(url) {
+    console.log("start getting");
+    
+    let keys =[ ...catMap.keys() ];
+    for (let i = 0; i < keys.length; i++) {
+        if (url.startsWith(keys[i])){
+            return catMap.get(keys[i]);
+        }
+        console.log("looping");
+    }
+
+    return null;
+}
+
+function getShopCSP(url) {
+    console.log("start getting");
+    
+    let keys =[ ...shopMap.keys() ];
+    for (let i = 0; i < keys.length; i++) {
+        if (url.startsWith(keys[i])){
+            return shopMap.get(keys[i]);
+        }
+        console.log("looping");
+    }
+
+    return null;
+}
+
+function setCatCSP(url, modifiedCSP){
+    catMap.set(url,modifiedCSP);
+    console.log('modified: ', catMap);
+}
+
+function setShopCSP(url, modifiedCSP){
+    shopMap.set(url,modifiedCSP);
+    console.log('modified: ', shopMap);
 }
 
 function findCSPObject(headers) {

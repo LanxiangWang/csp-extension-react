@@ -17,6 +17,7 @@ import green from '@material-ui/core/colors/green';
 
 import PageControl from './PageControl';
 import ResourceControl from './ResourceControl';
+import CategoryControl from './CategoryControl';
 
 import Dialog from '@material-ui/core/Dialog';
 import ListItemText from '@material-ui/core/ListItemText';
@@ -238,11 +239,8 @@ class FloatingActionButtonZoom extends React.Component {
           onChangeIndex={this.handleChangeIndex}
         >
           <TabContainer dir={theme.direction}><PageControl /></TabContainer>
-          <TabContainer dir={theme.direction}>
-            <ResourceControl 
-              />
-          </TabContainer>
-          <TabContainer dir={theme.direction}>Item Three</TabContainer>
+          <TabContainer dir={theme.direction}><ResourceControl /></TabContainer>
+          <TabContainer dir={theme.direction}><CategoryControl /></TabContainer>
         </SwipeableViews>
       </div>
     );
