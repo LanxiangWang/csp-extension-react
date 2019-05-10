@@ -32,7 +32,7 @@ chrome.webRequest.onHeadersReceived.addListener(details => {
 
         if (!isCheckedMap.get(url)) {
             headers.map(header => {
-                if (header.name === 'content-security-policy') {
+                if (header.name === 'content-security-policy' || header.name === 'Content-Security-Policy') {
                     originalCspMap.set(url, header.value);
                     // console.log(url, ' contains CSP: ', header.value);
                 }
@@ -137,7 +137,7 @@ chrome.webRequest.onBeforeSendHeaders.addListener(details => {
         }
     }
 
-    if (details.type === 'iframe') {
+    if (details.type === 'sub_frame') {
         switch(cssConfig) {
             case 'allow':
                 break;
@@ -301,7 +301,7 @@ function setShopCSP(url, modifiedCSP){
 function findCSPObject(headers) {
     let index = -1;
     headers.map((header, i) => {
-        if (header.name === 'content-security-policy') {
+        if (header.name === 'content-security-policy' || header.name === 'Content-Security-Policy') {
             index = i;
         }
     })
