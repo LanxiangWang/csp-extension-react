@@ -25,16 +25,24 @@ class CategoryControl extends Component {
 
         this.addNewsWeb = this.addNewsWeb.bind(this);
         this.addShopWeb = this.addShopWeb.bind(this);
+        //this.addSelfWeb = this.addSelfWeb.bind(this);
         this.deleteNewsWeb = this.deleteNewsWeb.bind(this);
         this.deleteShopWeb = this.deleteShopWeb.bind(this);
+        //this.deleteSelfWeb = this.deleteSelfWeb.bind(this);
         this.handleCSP = this.handleCSP.bind(this);
         this.handleShopCSP=this.handleShopCSP.bind(this);
+        //this.handleSelfCSP=this.handleSelfCSP.bind(this);
+        //this.onAppendChild = this.onAppendChild.bind(this);
+        //this.onDeleteChild=this.onDeleteChild.bind(this);
+
 
         this.state = {
             newsWebsite:[],
             shopWebsite:[],
+            selfWebsite:[],
             webInput:'',
             cspInput:'',
+            selfInput:'',
             numChildren:0,
             childName:[],
         }
@@ -58,6 +66,8 @@ class CategoryControl extends Component {
                 });
                 this.bg.addShopWebList(event);
     }
+
+
 
     deleteNewsWeb(){
              var event = this.state.webInput;
@@ -134,6 +144,8 @@ class CategoryControl extends Component {
 
 
 
+
+
     componentDidMount() {
     }
 
@@ -143,7 +155,8 @@ class CategoryControl extends Component {
         var tmp = this.bg.getChildList();
         for (var i = 0; i < this.state.numChildren; i += 1) {
           console.log(tmp[i]);
-          children.push(<ChildComponent key={i} name={tmp[i]} />);
+          children.push(<ChildComponent key={i} name={tmp[i]} addSelfWeb={this.onAddSelfWeb}
+                           deleteSelfWeb={this.onDeleteSelfWeb} handleSelfCSP={this.onHandleSelfCSP} selfWeb={this.state.selfWebsite}/>);
         };
 
 
@@ -261,15 +274,18 @@ class CategoryControl extends Component {
                     {children}
                   </ParentComponent>
             </div>
+
+
         );
     }
 
     onAppendChild = () => {
         console.log("begin append name");
         this.setState({
-                  numChildren: this.state.numChildren + 1
+              numChildren: this.state.numChildren + 1
         });
         var newName = document.getElementById("name").value;
+        console.log('newName: ', newName);
         this.setState({
           childName: [...this.state.childName,newName]
         });
@@ -287,10 +303,63 @@ class CategoryControl extends Component {
            }));
           this.bg.delChildList(newName);
       }
+
+    onAddSelfWeb = () => {
+           var event = document.getElementById("selfWeb").value;
+           this.setState({
+               selfWebsite: [event, ...this.state.selfWebsite]
+           });
+           this.bg.addSelfList(event);
+    }
+
+    onDeleteSelfWeb = () => {
+            var event = document.getElementById("selfWeb").value;
+            this.setState(() => ({
+               selfWebsite: this.state.selfWebsite.filter(el => el != event )
+            }));
+            this.bg.delSelfList(event);
+    }
+
+    onHandleSelfCSP = () => {
+            console.log("Start to handle csp!");
+             //selfCSP
+              var csp = document.getElementById("selfCSP").value;
+              console.log("csp: ",csp);
+              let that = this;
+
+              chrome.tabs.query({
+                      active: true,
+                      currentWindow: true
+                  }, function(tabs) {
+                      let url = tabs[0].url;
+                      let webList = that.bg.getSelfList()
+                      console.log('webList: ', webList);
+                      if (webList){
+                          for (let i = 0; i < webList.length; i++) {
+                              var el = webList[i];
+                              if (url.startsWith(el)){
+                                   that.bg.setSelfCSP(el,csp);
+                                   console.log("modified: ",csp);
+                                   console.log("found!");
+                              }
+                          }
+                      }
+                  });
+    }
+
+    onListWeb = () => {
+          console.log("hope it works==========");
+          return (this.state.selfWebsite.map((el) => <li>{el}</li>));
+    }
+
+
+
+
+
 }
 
 const ParentComponent = props => (
-  <div className="card calculator">
+  <div>
     <div>
         <br />
         <br />
@@ -330,16 +399,16 @@ const ChildComponent = props => <div>{<ExpansionPanel>
                                                    <Typography>
                                                      <div>
                                                      <ul>
-                                                          {}
+                                                         {props.selfWeb.map((el) => <li>{el}</li> )}
                                                      </ul>
                                                      </div>
                                                      <br />
-                                                     <label> Web:<input type="text" id="web" /></label>
+                                                     <label> Web:<input type="text" id="selfWeb" /></label>
                                                      <br />
                                                      <br />
-                                                     <Fab size= "small" color="secondary" aria-label="Add" ><AddIcon />
+                                                     <Fab size= "small" onClick={props.addSelfWeb} color="secondary" aria-label="Add" ><AddIcon />
                                                      </Fab>
-                                                     <Fab size= "small" color="secondary" aria-label="Delete"><DelIcon />
+                                                     <Fab size= "small" onClick={props.deleteSelfWeb} color="secondary" aria-label="Delete"><DelIcon />
                                                      </Fab>
 
                                                    </Typography>
@@ -354,8 +423,8 @@ const ChildComponent = props => <div>{<ExpansionPanel>
                                                  </ExpansionPanelSummary>
                                                  <ExpansionPanelDetails>
                                                    <Typography>
-                                                     <label> Input CSP:<input type="text" id="cspInput"/></label>
-                                                       <Button variant="contained" >
+                                                     <label> Input CSP:<input type="text" id="selfCSP"/></label>
+                                                       <Button variant="contained" onClick={props.handleSelfCSP}>
                                                                Confirm
                                                        </Button>
                                                    </Typography>
